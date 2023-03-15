@@ -1,11 +1,10 @@
 package database;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import javax.swing.table.DefaultTableModel;
+import java.sql.*;
 
 public class Database {
-    public Connection getConnection() throws ClassNotFoundException, SQLException {
+    public static Connection getConnection() throws ClassNotFoundException, SQLException {
         String url
                 = "jdbc:mysql://localhost:3306/"; // table details
         String username = "root"; // MySQL credentials
@@ -33,8 +32,20 @@ public class Database {
 //        System.out.println("Connection Closed....");
     }
 
-    public void closeConnection(Connection con) throws SQLException {
+    public static void closeConnection(Connection con) throws SQLException {
         con.close();
         System.out.println("Connection Closed Succesfully");
     }
+
+    public static ResultSet executeSelectQuery(String query, Connection con) throws SQLException {
+        Statement statement = con.createStatement();
+        return statement.executeQuery(query);
+    }
+
+//    public static DefaultTableModel generateTableModel(ResultSet rs) throws SQLException {
+//        while(rs.next()){
+//
+//
+//        }
+//    }
 }
