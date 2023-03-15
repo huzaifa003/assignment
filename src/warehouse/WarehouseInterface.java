@@ -5,18 +5,15 @@ import java.awt.*;
 import javax.swing.GroupLayout.Alignment;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.DefaultTableModel;
 import database.Database;
-
 public class WarehouseInterface extends JFrame{
 
+    Date date = new Date(System.currentTimeMillis());
     public void addToStock(String id, String qty){
         Statement st = null;
         try {
@@ -50,6 +47,27 @@ public class WarehouseInterface extends JFrame{
         }
     }
 
+    public  void calenderMatch() throws SQLException {
+        int p_id;
+        int schedule_id;
+        int qty;
+        Statement st = con.createStatement();
+        ResultSet rs = Database.executeSelectQuery("SELECT * FROM construction.schedule WHERE shipping_date = '" + date + "'",con);
+        while(rs.next()){
+            p_id = rs.getInt("p_id");
+            schedule_id = rs.getInt("scheduled_id");
+            qty = rs.getInt("qty");
+
+            System.out.print(p_id);
+            System.out.print("   ");
+            System.out.print(schedule_id);
+            System.out.print("   ");
+            System.out.println(qty);
+            addToStock(String.valueOf(p_id),String.valueOf(qty));
+            st.executeUpdate("DELETE FROM construction.schedule WHERE scheduled_id = " + schedule_id);
+        }
+    }
+
     Connection con = Database.getConnection();
 
     private JTable scheduledTable;
@@ -59,6 +77,7 @@ public class WarehouseInterface extends JFrame{
         this.setSize(new Dimension(800,600));
         getContentPane().setLayout(null);
 
+        calenderMatch();
         JLabel titleWarehouse = new JLabel("Warehouse Panel\r\n");
         titleWarehouse.setHorizontalAlignment(SwingConstants.CENTER);
         titleWarehouse.setBounds(296, 11, 250, 23);
@@ -258,6 +277,8 @@ public class WarehouseInterface extends JFrame{
             }
         });
         buttonPanel.add(addContract);
+
+
 
     }
 }
