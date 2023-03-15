@@ -1,20 +1,18 @@
-package warehouse;
+package SalesInterface;
 
 import javax.swing.*;
 import java.awt.*;
-import javax.swing.GroupLayout.Alignment;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import javax.swing.border.BevelBorder;
 import javax.swing.table.DefaultTableModel;
 import database.Database;
-public class WarehouseInterface extends JFrame{
+public class Sales extends JFrame{
 
     Date date = new Date(System.currentTimeMillis());
-    public void addToStock(String id, String qty){
+    public void sellToStock(String id, String qty){
         Statement st = null;
         try {
             st = con.createStatement();
@@ -33,11 +31,14 @@ public class WarehouseInterface extends JFrame{
         try {
             if (!rs.next())
             {
-                st.executeUpdate("INSERT INTO construction.instock VALUES(" + id + "," + qty + ")" );
+                JOptionPane.showMessageDialog(null,"This product doesn't exist");
             }
             else
             {
-                totalQty = Integer.parseInt(rs.getString("stock")) + Integer.parseInt(qty);
+                totalQty = Integer.parseInt(rs.getString("stock")) - Integer.parseInt(qty);
+                if (totalQty < 0){
+                    JOptionPane.showMessageDialog(null,"This Qty doesn't exist");
+                }
                 System.out.println(totalQty);
                 st.executeUpdate("UPDATE construction.instock SET instock.stock = "+ String.valueOf(totalQty)  + " WHERE construction.instock.p_id = " + id);
 
@@ -63,7 +64,7 @@ public class WarehouseInterface extends JFrame{
             System.out.print(schedule_id);
             System.out.print("   ");
             System.out.println(qty);
-            addToStock(String.valueOf(p_id),String.valueOf(qty));
+            sellToStock(String.valueOf(p_id),String.valueOf(qty));
             st.executeUpdate("DELETE FROM construction.schedule WHERE scheduled_id = " + schedule_id);
         }
     }
@@ -71,14 +72,14 @@ public class WarehouseInterface extends JFrame{
     Connection con = Database.getConnection();
 
     private JTable scheduledTable;
-    public WarehouseInterface() throws SQLException, ClassNotFoundException {
+    public Sales() throws SQLException, ClassNotFoundException {
 
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(new Dimension(800,600));
         getContentPane().setLayout(null);
 
         calenderMatch();
-        JLabel titleWarehouse = new JLabel("Warehouse Panel\r\n");
+        JLabel titleWarehouse = new JLabel("Sales Panel\r\n");
         titleWarehouse.setHorizontalAlignment(SwingConstants.CENTER);
         titleWarehouse.setBounds(296, 11, 250, 23);
         getContentPane().add(titleWarehouse);
@@ -152,7 +153,7 @@ public class WarehouseInterface extends JFrame{
                 System.out.println(con);
                 DefaultTableModel product_model = new DefaultTableModel();
                 try {
-                    ResultSet rs = Database.executeSelectQuery("SELECT schedule.p_id,products.color,products.texture, schedule.shipping_date, schedule.qty FROM construction.schedule INNER JOIN construction.products ON schedule.p_id = products.p_id",con);
+                    ResultSet rs = Database.executeSelectQuery("SELECT reserved.p_id,products.color,products.texture, reserved.delivery_date, reserved.qty FROM construction.reserved INNER JOIN construction.products ON reserved.p_id = products.p_id",con);
                     product_model.addColumn("Product ID");
                     product_model.addColumn("Color");
                     product_model.addColumn("Texture");
@@ -166,7 +167,7 @@ public class WarehouseInterface extends JFrame{
                         product_id = rs.getInt("p_id");
                         color = rs.getString("color");
                         texture = rs.getString("texture");
-                        date = rs.getString("shipping_date");
+                        date = rs.getString("delivery_date");
                         qty = rs.getInt("qty");
                         product_model.addRow(new Object[]{product_id,color,texture,date,qty});
                     }
@@ -217,14 +218,14 @@ public class WarehouseInterface extends JFrame{
         });
         buttonPanel.add(showStock);
 
-        JButton addStock = new JButton("Add Stock");
+        JButton addStock = new JButton("Sell Stock");
         addStock.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 showStock.doClick();
-                String id = JOptionPane.showInputDialog(null,"Enter the product ID you want to add stock of ");
-                String qty = JOptionPane.showInputDialog(null,"Enter the product qty you want to add stock of ");
-                addToStock(id,qty);
+                String id = JOptionPane.showInputDialog(null,"Enter the product ID you want to sell stock of ");
+                String qty = JOptionPane.showInputDialog(null,"Enter the product qty you want to sell stock of ");
+                sellToStock(id,qty);
                 showStock.doClick();
 
 
@@ -233,14 +234,14 @@ public class WarehouseInterface extends JFrame{
         });
         buttonPanel.add(addStock);
 
-        JButton addContract = new JButton("Add Order");
+        JButton addContract = new JButton("Add Contract");
         addContract.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 showStock.doClick();
-                String id = JOptionPane.showInputDialog(null,"Enter the product ID you want to add stock of ");
-                String qty = JOptionPane.showInputDialog(null,"Enter the product qty you want to add stock of ");
-                String date = JOptionPane.showInputDialog(null,"Enter the date for the order");
+                String id = JOptionPane.showInputDialog(null,"Enter the product ID you want to sell stock of ");
+                String qty = JOptionPane.showInputDialog(null,"Enter the product qty you want to sell stock of ");
+                String date = JOptionPane.showInputDialog(null,"Enter the date for the shipping");
 
 
 
@@ -266,8 +267,8 @@ public class WarehouseInterface extends JFrame{
                     java.util.Date dateStr = formatter.parse(date);
                     java.sql.Date dateDB = new java.sql.Date(dateStr.getTime());
                     System.out.println(dateDB);
-                        st.executeUpdate("INSERT INTO construction.schedule (p_id,shipping_date,qty) VALUES(" + id + ",'" + dateDB + "'," + qty + ")" );
-                        addToStock(id,qty);
+                    st.executeUpdate("INSERT INTO construction.schedule (p_id,shipping_date,qty) VALUES(" + id + ",'" + dateDB + "'," + qty + ")" );
+                    sellToStock(id,qty);
 
                 } catch (SQLException | ParseException throwables) {
                     throwables.printStackTrace();
